@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+   <meta charset="utf-8">
+   <title>d3.js test</title>
+   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
+   <script src="https://d3js.org/d3.v5.js"></script>
+   <style>
+      .links line {
+         stroke: #999;
+         stroke-opacity: 0.6;
+      }
+
+      .nodes circle {
+         stroke: #fff;
+         stroke-width: 1.5p
+      }
+
+      div.tooltip {
+          position: absolute;
+          background-color: white;
+          max-width: 400px;
+          height: auto;
+          padding: 1px;
+          border-style: solid;
+          border-radius: 4px;
+          border-width: 1px;
+          box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
+          pointer-events: none;
+      }
+
+      body {
+         background-color: #fff;
+      }
+
+      #d3Graph {
+         background-color: #fff;
+      }
+   </style>
+
+</head>
+
+<body>
+   <div>
+      <h3>Filter Domain</h3>
+      <label>
+         <input type="radio" name="domainFilter" value="D1" checked>Domain 1</label>
+      <br />
+      <label>
+         <input type="radio" name="domainFilter" value="D2" checked>Domain 2</label>
+      <br />
+      <label>
+         <input type="radio" name="domainFilter" value="D3" checked>Domain 3</label>
+      <br />
+      <label>
+         <input type="radio" name="domainFilter" value="*" checked>All</label>
+      <br />
+   </div>
+   <hr />
+
+
+   <svg id="d3Graph" width="1160" height="700"></svg>
+
+
+   <script type="text/javascript">
+      var nodesInputData = [
+         {"id":1, "domain":"D1", "team":"D1T1", "depth":1},
+         {"id":10, "domain":"D1", "team":"D1T2", "depth":2},
+         {"id":11, "domain":"D1", "team":"D1T1", "depth":2},
+         {"id":20, "domain":"D2", "team":"D2T1", "depth":3},
+         {"id":21, "domain":"D2", "team":"D1T2", "depth":3},
+         {"id":22, "domain":"D1", "team":"D1T2", "depth":3},
+         {"id":31, "domain":"D2", "team":"D2T1", "depth":4},
+         {"id":32, "domain":"D2", "team":"D2T1", "depth":4},
+         {"id":33, "domain":"D3", "team":"D1T1", "depth":4},
+         {"id":34, "domain":"D3", "team":"D3T1", "depth":4},
+         {"id":41, "domain":"D3", "team":"D3T1", "depth":5}
+      ];
+      var linksInputData = [
+         {"source":1, "target":10, "domains":["D1","D2"]},
+         {"source":1, "target":11, "domains":["D1","D2","D3"]},
+         {"source":10, "target":20, "domains":["D2"]},
+         {"source":11, "target":21, "domains":["D2","D3"]},
+         {"source":11, "target":22, "domains":["D1","D3"]},
+         {"source":20, "target":31, "domains":["D2"]},
+         {"source":21, "target":31, "domains":["D2"]},
+         {"source":21, "target":32, "domains":["D2"]},
+         {"source":21, "target":34, "domains":["D3"]},
+         {"source":22, "target":33, "domains":["D3"]},
+         {"source":33, "target":41, "domains":["D3"]}
+      ];
+
+      function makeGraph(selector, nodesInput, linksInput) {
+         //console.debug("makeGraph -> nodesInput: " + JSON.stringify(nodesInput));
+         //console.debug("makeGraph -> linksInput: " + JSON.stringify(linksInput));
+
+         var width = 1160,
+            height = 700,
+            radius = 6;
+         var svg = d3.select(selector)
+            .attr("width", width)
+            .attr("height", height);
+
+         var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+         var simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(function(d) {
+               //console.debug("d: " + JSON.stringify(d));
+               return d.id;
+            }).distance(60).strength(1))
+            .force("yAxis",d3.forceY(function y(d) {
+               //console.debug("forceY for " + d.id + " to " + d.depth*60);
+               return d.depth*60;
+            }))
+            .force("charge", d3.forceManyBody())
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("gravity", gravity(0.25));
+
+         function gravity(alpha) {
+            return function(d) {
+               d.y += (d.cy - d.y) * alpha;
+               d.x += (d.cx - d.x) * alpha;
+            };
+         }
+
+         var link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(linksInput)
+            .enter().append("line")
+            .attr("stroke-width", 5)
+            .on('mouseover', function(d) {
+               var thisSource = d.source.id,
+                  thisTarget = d.target.id;
+               //console.debug("thisSource: " + thisSource + "  thisTarget: " + thisTarget);
+               var filteredLinks = linksInput.filter(function(e) {
+                  return (e.source.id === thisSource && e.target.id === thisTarget) || (e.source.id === thisTarget && e.target.id === thisSource);
+               });
+               //console.log(filteredLinks);
+               tooltip.html("");
+
+               var list = tooltip.selectAll(".list")
+                  .data(filteredLinks)
+                  .enter()
+                  .append("div");
+
+               list.html(function(d) {
+                  //console.log(d);
+                  return "from: " + d.source.id + "<br>to: " + d.target.id + "<br>affected domains: "+ d.domains+"<br><br>";
+               });
+
+               tooltip.transition()
+                  .duration(600)
+                  .style("opacity", .8);
+               tooltip.style("left", (d3.event.pageX) + "px")
+                  .style("top", (d3.event.pageY + 10) + "px");
+            })
+            .on("mouseout", function() {
+               tooltip.transition()
+                  .duration(300)
+                  .style("opacity", 0);
+            })
+            .on("mousemove", function() {
+               tooltip.style("left", (d3.event.pageX) + "px")
+                  .style("top", (d3.event.pageY + 10) + "px");
+            });
+
+         var node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(nodesInput)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 5)
+            .attr("fill", function(d) {
+               return color(d.domain);
+            })
+            .on('mouseover', function(d) {
+               tooltip.transition()
+                  .duration(600)
+                  .style("opacity", .8);
+               tooltip.html(d.id + "<p/>Domain:" + d.domain)
+                  .style("left", (d3.event.pageX) + "px")
+                  .style("top", (d3.event.pageY + 10) + "px");
+            })
+            .on("mouseout", function() {
+               tooltip.transition()
+                  .duration(200)
+                  .style("opacity", 0);
+            })
+            .on("mousemove", function() {
+               tooltip.style("left", (d3.event.pageX) + "px")
+                  .style("top", (d3.event.pageY + 10) + "px");
+            })
+
+            .call(d3.drag()
+               .on("start", dragstarted)
+               .on("drag", dragged)
+               .on("end", dragended));
+
+         simulation.nodes(nodesInput)
+            .on("tick", ticked);
+
+         simulation.force("link")
+            .links(linksInput);
+
+         d3.selectAll("input[name=domainFilter]").on("change", function() {
+            var radioValue = document.querySelector('input[name="domainFilter"]:checked').value;
+            //console.debug("domainFilter: " + radioValue);
+            //console.debug("node: " + JSON.stringify(node));
+
+            node.filter(function(d) {
+               if (radioValue==="*") {
+                  //console.debug("radioValue=* for domain " + d.domain);
+                  return 1 === 1;
+               } else {
+                  //console.debug("d.domain === radioValue? : " + d.domain + "!=" + radioValue + "? : " + (radioValue != d.domain));
+                  return radioValue === d.domain;
+               }
+            })
+            .style("fill", function(d) {
+               //console.debug("color node " + d.id + " with color " + color(d.domain));
+               return color(d.domain);
+            });
+
+            node.filter(function(d) {
+               if (radioValue==="*") {
+                  //console.debug("radioValue=* for domain " + d.domain);
+                  return 1 === 0;
+               } else {
+                  return radioValue != d.domain;
+               }
+            })
+            .style("fill", "ccc");
+
+            link.filter(function(l){
+               //console.debug("from: " +l.source.id + " to: " + l.target.id + ": " + JSON.stringify(l.domains));
+               //console.debug("l.domains.indexOf(radioValue): " + l.domains.indexOf(radioValue));
+               return l.domains.indexOf(radioValue) >=0;
+            })
+            .style("stroke",  function(d) {
+               //console.debug("d: " + JSON.stringify(d));
+               //console.debug("color link from: " +d.source.id + " to: " + d.target.id + " with color: " + color(radioValue));
+               return color(radioValue);
+            });
+
+            link.filter(function(l){
+               //console.debug("from: " +l.source.id + " to: " + l.target.id + ": " + JSON.stringify(l.domains));
+               //console.debug("l.domains.indexOf(radioValue): " + l.domains.indexOf(radioValue));
+               return l.domains.indexOf(radioValue) < 0;
+            })
+            .style("stroke",  "#ccc");
+         });
+
+         function ticked() {
+            link
+               .attr("x1", function(d) {
+                  //console.debug("ticked --> d: " + JSON.stringify(d));
+                  return d.source.x;
+               })
+               .attr("y1", function(d) {
+                  return d.source.y;
+               })
+               .attr("x2", function(d) {
+                  return d.target.x;
+               })
+               .attr("y2", function(d) {
+                  return d.target.y;
+               });
+
+            node
+               .attr("cx", function(d) {
+                  return d.x;
+               })
+               .attr("cy", function(d) {
+                  return d.y;
+               });
+         }
+
+         function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+         }
+
+         function dragged(d) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+         }
+
+         function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+         }
+
+      }
+
+      var tooltip = d3.select("body")
+         .append("div")
+         .attr("class", "tooltip")
+         .style("opacity", 0);
+
+      makeGraph("#d3Graph", nodesInputData, linksInputData);
+   </script>
+
+</body>
+
+</html>
