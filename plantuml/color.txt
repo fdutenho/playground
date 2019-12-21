@@ -1,0 +1,24 @@
+BorderColor Grey
+BorderColor<<domain1>> Black
+'BorderColor<<domain2>> Black
+'BorderColor<<domain3>> Black
+
+FontColor Grey
+FontColor<<domain1>> Black
+'FontColor<<domain2>> Black
+'FontColor<<domain3>> Black
+
+BackgroundColor White
+BackgroundColor<<domain1>> Tomato
+'BackgroundColor<<domain2>> Tomato
+'BackgroundColor<<domain3>> Tomato
+
+ArrowColor Grey
+ArrowColor<<domain1>> Red
+'ArrowColor<<domain2>> Red
+'ArrowColor<<domain3>> Red
+
+ArrowThickness 2
+ArrowThickness<<domain1>> 4
+'ArrowThickness<<domain2>> 4
+'ArrowThickness<<domain3>> 4

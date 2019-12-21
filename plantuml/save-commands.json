@@ -1,0 +1,5 @@
+{
+	"commands": [
+		"**/*.puml: java -jar c:\\dev\\plantuml\\plantuml.jar {relFullPath}"
+	]
+}
