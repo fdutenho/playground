@@ -5,4 +5,4 @@ Very often with a huge set of (not yet removed) debug information.
 
 ## d3.js
 
-see [./d3/]
+see folder [d3](./d3/)
