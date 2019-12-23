@@ -68,27 +68,30 @@
          {"id":1, "name": "root node", "domain":"D1", "team":"D1T1", "depth":1},
          {"id":10, "name": "node a", "domain":"D1", "team":"D1T2", "depth":2},
          {"id":11, "name": "node b", "domain":"D1", "team":"D1T1", "depth":2},
-         {"id":20, "name": "node c", "domain":"D2", "team":"D2T1", "depth":3},
          {"id":21, "name": "node d", "domain":"D2", "team":"D1T2", "depth":3},
+         {"id":20, "name": "node c", "domain":"D2", "team":"D2T1", "depth":3},
          {"id":22, "name": "node e", "domain":"D1", "team":"D1T2", "depth":3},
-         {"id":31, "name": "node f", "domain":"D2", "team":"D2T1", "depth":4},
          {"id":32, "name": "node g", "domain":"D2", "team":"D2T1", "depth":4},
          {"id":33, "name": "node h", "domain":"D3", "team":"D1T1", "depth":4},
+         {"id":41, "name": "node j", "domain":"D3", "team":"D3T1", "depth":5},
+         {"id":31, "name": "node f", "domain":"D2", "team":"D2T1", "depth":4},
          {"id":34, "name": "node i", "domain":"D3", "team":"D3T1", "depth":4},
-         {"id":41, "name": "node j", "domain":"D3", "team":"D3T1", "depth":5}
+         {"id":23, "name": "node j", "domain":"D1", "team":"D1T2", "depth":3},
       ];
       var linksInputData = [
-         {"source":1, "target":10, "domains":["D1","D2"]},
          {"source":1, "target":11, "domains":["D1","D2","D3"]},
-         {"source":10, "target":20, "domains":["D2"]},
-         {"source":11, "target":21, "domains":["D2","D3"]},
+         {"source":1, "target":10, "domains":["D1","D2"]},
          {"source":11, "target":22, "domains":["D1","D3"]},
          {"source":20, "target":31, "domains":["D2"]},
-         {"source":21, "target":31, "domains":["D2"]},
+         {"source":11, "target":21, "domains":["D2","D3"]},
+         {"source":11, "target":23, "domains":["D1","D2"]},
+         {"source":10, "target":20, "domains":["D2"]},
          {"source":21, "target":32, "domains":["D2"]},
          {"source":21, "target":34, "domains":["D3"]},
          {"source":22, "target":33, "domains":["D3"]},
-         {"source":33, "target":41, "domains":["D3"]}
+         {"source":23, "target":31, "domains":["D2"]},
+         {"source":21, "target":31, "domains":["D2"]},
+         {"source":33, "target":41, "domains":["D3"]},
       ];
 
       function makeGraph(selector, nodesInput, linksInput) {
@@ -112,20 +115,20 @@
             }).distance(80).strength(1))
             .force("charge", d3.forceManyBody())
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("distance", d3.forceManyBody().distanceMin(30))
+            .force("distance", d3.forceManyBody().distanceMin(50))
             .force('collision', d3.forceCollide().radius(function(d) {
                return d.radius-50;
             }))
             .force("yAxis",d3.forceY(function y(d) {
                //console.debug("forceY for " + d.id + " to " + d.depth*60);
-               return d.depth*80;
+               return d.depth*120;
             }).strength(0.5))
             .force("xAxis",d3.forceX(function x(d) {
                //console.debug("forceX for " + d.id + " to " + d.x*15);
                return d.x*15;
             }).strength(0.01))
             .force("collide", d3.forceCollide().radius(function(d) {
-               return (5*cicleSize)+5;
+               return (4*cicleSize)+5;
             }).strength(0.2))
             .force("gravity", gravity(0.5));
 
