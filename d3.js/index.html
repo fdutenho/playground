@@ -65,17 +65,17 @@
 
    <script type="text/javascript">
       var nodesInputData = [
-         {"id":1, "domain":"D1", "team":"D1T1", "depth":1},
-         {"id":10, "domain":"D1", "team":"D1T2", "depth":2},
-         {"id":11, "domain":"D1", "team":"D1T1", "depth":2},
-         {"id":20, "domain":"D2", "team":"D2T1", "depth":3},
-         {"id":21, "domain":"D2", "team":"D1T2", "depth":3},
-         {"id":22, "domain":"D1", "team":"D1T2", "depth":3},
-         {"id":31, "domain":"D2", "team":"D2T1", "depth":4},
-         {"id":32, "domain":"D2", "team":"D2T1", "depth":4},
-         {"id":33, "domain":"D3", "team":"D1T1", "depth":4},
-         {"id":34, "domain":"D3", "team":"D3T1", "depth":4},
-         {"id":41, "domain":"D3", "team":"D3T1", "depth":5}
+         {"id":1, "name": "root node", "domain":"D1", "team":"D1T1", "depth":1},
+         {"id":10, "name": "node a", "domain":"D1", "team":"D1T2", "depth":2},
+         {"id":11, "name": "node b", "domain":"D1", "team":"D1T1", "depth":2},
+         {"id":20, "name": "node c", "domain":"D2", "team":"D2T1", "depth":3},
+         {"id":21, "name": "node d", "domain":"D2", "team":"D1T2", "depth":3},
+         {"id":22, "name": "node e", "domain":"D1", "team":"D1T2", "depth":3},
+         {"id":31, "name": "node f", "domain":"D2", "team":"D2T1", "depth":4},
+         {"id":32, "name": "node g", "domain":"D2", "team":"D2T1", "depth":4},
+         {"id":33, "name": "node h", "domain":"D3", "team":"D1T1", "depth":4},
+         {"id":34, "name": "node i", "domain":"D3", "team":"D3T1", "depth":4},
+         {"id":41, "name": "node j", "domain":"D3", "team":"D3T1", "depth":5}
       ];
       var linksInputData = [
          {"source":1, "target":10, "domains":["D1","D2"]},
@@ -95,10 +95,11 @@
          //console.debug("makeGraph -> nodesInput: " + JSON.stringify(nodesInput));
          //console.debug("makeGraph -> linksInput: " + JSON.stringify(linksInput));
 
-         var width = 1160,
-            height = 700,
-            radius = 6;
-         var svg = d3.select(selector)
+         var width = 1160;
+         var height = 700;
+         var cicleSize = 10;
+
+         var svgContainer = d3.select(selector)
             .attr("width", width)
             .attr("height", height);
 
@@ -108,14 +109,25 @@
             .force("link", d3.forceLink().id(function(d) {
                //console.debug("d: " + JSON.stringify(d));
                return d.id;
-            }).distance(60).strength(1))
-            .force("yAxis",d3.forceY(function y(d) {
-               //console.debug("forceY for " + d.id + " to " + d.depth*60);
-               return d.depth*60;
-            }))
+            }).distance(80).strength(1))
             .force("charge", d3.forceManyBody())
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("gravity", gravity(0.25));
+            .force("distance", d3.forceManyBody().distanceMin(30))
+            .force('collision', d3.forceCollide().radius(function(d) {
+               return d.radius-50;
+            }))
+            .force("yAxis",d3.forceY(function y(d) {
+               //console.debug("forceY for " + d.id + " to " + d.depth*60);
+               return d.depth*80;
+            }).strength(0.5))
+            .force("xAxis",d3.forceX(function x(d) {
+               //console.debug("forceX for " + d.id + " to " + d.x*15);
+               return d.x*15;
+            }).strength(0.01))
+            .force("collide", d3.forceCollide().radius(function(d) {
+               return (5*cicleSize)+5;
+            }).strength(0.2))
+            .force("gravity", gravity(0.5));
 
          function gravity(alpha) {
             return function(d) {
@@ -124,7 +136,7 @@
             };
          }
 
-         var link = svg.append("g")
+         var links = svgContainer.append("g")
             .attr("class", "links")
             .selectAll("line")
             .data(linksInput)
@@ -166,13 +178,14 @@
                   .style("top", (d3.event.pageY + 10) + "px");
             });
 
-         var node = svg.append("g")
+         var nodes = svgContainer.append("g")
             .attr("class", "nodes")
+            .attr("id", "nodesID")
             .selectAll("circle")
             .data(nodesInput)
             .enter().append("circle")
             .attr("class", "node")
-            .attr("r", 5)
+            .attr("r", cicleSize)
             .attr("fill", function(d) {
                return color(d.domain);
             })
@@ -180,7 +193,7 @@
                tooltip.transition()
                   .duration(600)
                   .style("opacity", .8);
-               tooltip.html(d.id + "<p/>Domain:" + d.domain)
+               tooltip.html(d.id + "<p/>Name: " + d.name + "<br/>Domain:" + d.domain + "</p>")
                   .style("left", (d3.event.pageX) + "px")
                   .style("top", (d3.event.pageY + 10) + "px");
             })
@@ -193,11 +206,18 @@
                tooltip.style("left", (d3.event.pageX) + "px")
                   .style("top", (d3.event.pageY + 10) + "px");
             })
-
             .call(d3.drag()
                .on("start", dragstarted)
                .on("drag", dragged)
-               .on("end", dragended));
+               .on("end", dragended)
+            );
+
+         var texts = svgContainer.append('g')
+            .selectAll('text')
+            .data(nodesInput)
+            .enter().append('text')
+            .text(function(d) { return d.name })
+            .attr("pointer-events", "none");
 
          simulation.nodes(nodesInput)
             .on("tick", ticked);
@@ -210,7 +230,7 @@
             //console.debug("domainFilter: " + radioValue);
             //console.debug("node: " + JSON.stringify(node));
 
-            node.filter(function(d) {
+            nodes.filter(function(d) {
                if (radioValue==="*") {
                   //console.debug("radioValue=* for domain " + d.domain);
                   return 1 === 1;
@@ -224,7 +244,7 @@
                return color(d.domain);
             });
 
-            node.filter(function(d) {
+            nodes.filter(function(d) {
                if (radioValue==="*") {
                   //console.debug("radioValue=* for domain " + d.domain);
                   return 1 === 0;
@@ -234,7 +254,7 @@
             })
             .style("fill", "ccc");
 
-            link.filter(function(l){
+            links.filter(function(l){
                //console.debug("from: " +l.source.id + " to: " + l.target.id + ": " + JSON.stringify(l.domains));
                //console.debug("l.domains.indexOf(radioValue): " + l.domains.indexOf(radioValue));
                return l.domains.indexOf(radioValue) >=0;
@@ -245,7 +265,7 @@
                return color(radioValue);
             });
 
-            link.filter(function(l){
+            links.filter(function(l){
                //console.debug("from: " +l.source.id + " to: " + l.target.id + ": " + JSON.stringify(l.domains));
                //console.debug("l.domains.indexOf(radioValue): " + l.domains.indexOf(radioValue));
                return l.domains.indexOf(radioValue) < 0;
@@ -253,28 +273,38 @@
             .style("stroke",  "#ccc");
          });
 
+         const xSpread = 1;
+
          function ticked() {
-            link
+            links
                .attr("x1", function(d) {
                   //console.debug("ticked --> d: " + JSON.stringify(d));
-                  return d.source.x;
+                  return d.source.x*xSpread;
                })
                .attr("y1", function(d) {
                   return d.source.y;
                })
                .attr("x2", function(d) {
-                  return d.target.x;
+                  return d.target.x*xSpread;
                })
                .attr("y2", function(d) {
                   return d.target.y;
                });
 
-            node
+            nodes
                .attr("cx", function(d) {
-                  return d.x;
+                  return d.x*xSpread;
                })
                .attr("cy", function(d) {
                   return d.y;
+               });
+
+            texts
+               .attr("x", function(d) {
+                  return d.x*xSpread +12;
+               })
+               .attr("y", function(d) {
+                  return d.y +6;
                });
          }
 
