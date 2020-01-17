@@ -341,9 +341,9 @@
                //console.debug("test: " + (l.timeFrom <= sliderValue && l.timeTo >= sliderValue));
                return (l.timeFrom <= sliderValue && l.timeTo >= sliderValue);
             })
-            .style("stroke",  function(l) {
+            .style("visibility",  function(l) {
                console.debug("colorize link " + l.source.id + "-" + l.target.id + ": l.timeFrom: " + l.timeFrom + " l.timeTo: " + l.timeTo);
-               return "999";
+               return "visible";
             });
 
             links.filter(function(l){
@@ -351,9 +351,9 @@
                //console.debug("test: " + !(l.timeFrom <= sliderValue && l.timeTo >= sliderValue));
                return !(l.timeFrom <= sliderValue && l.timeTo >= sliderValue);
             })
-            .style("stroke",  function(l) {
+            .style("visibility",  function(l) {
                console.debug("hide link " + l.source.id + "-" + l.target.id + ": l.timeFrom: " + l.timeFrom + " l.timeTo: " + l.timeTo);
-               return "fff";
+               return "hidden";
             });
          });
 
