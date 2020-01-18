@@ -134,19 +134,19 @@
          {"id":23, "name": "node j", "domain":"D1", "team":"D1T2", "depth":3},
       ];
       var linksInputData = [
-         {"source":1, "target":11, "domains":["D1","D2","D3"], "timeFrom": 1, "timeTo": 12},
-         {"source":1, "target":10, "domains":["D1","D2"], "timeFrom": 1, "timeTo": 1},
-         {"source":11, "target":22, "domains":["D1","D3"], "timeFrom": 1, "timeTo": 2},
-         {"source":20, "target":31, "domains":["D2"], "timeFrom": 1, "timeTo": 3},
-         {"source":11, "target":21, "domains":["D2","D3"], "timeFrom": 1, "timeTo": 4},
-         {"source":11, "target":23, "domains":["D1","D2"], "timeFrom": 1, "timeTo": 5},
-         {"source":10, "target":20, "domains":["D2"], "timeFrom": 1, "timeTo": 6},
-         {"source":21, "target":32, "domains":["D2"], "timeFrom": 1, "timeTo": 7},
-         {"source":21, "target":34, "domains":["D3"], "timeFrom": 1, "timeTo": 8},
-         {"source":22, "target":33, "domains":["D3"], "timeFrom": 1, "timeTo": 9},
-         {"source":23, "target":31, "domains":["D2"], "timeFrom": 1, "timeTo": 10},
-         {"source":21, "target":31, "domains":["D2"], "timeFrom": 1, "timeTo": 11},
-         {"source":33, "target":41, "domains":["D3"], "timeFrom": 1, "timeTo": 12},
+         {"source":1, "target":11, "domains":["D1","D2","D3"], "timeFrom": 1, "timeTo": 12, "importance": 8},
+         {"source":1, "target":10, "domains":["D1","D2"], "timeFrom": 1, "timeTo": 12, "importance": 8},
+         {"source":11, "target":22, "domains":["D1","D3"], "timeFrom": 1, "timeTo": 11, "importance": 8},
+         {"source":20, "target":31, "domains":["D2"], "timeFrom": 1, "timeTo": 7, "importance": 4},
+         {"source":11, "target":21, "domains":["D2","D3"], "timeFrom": 1, "timeTo": 9, "importance": 4},
+         {"source":11, "target":23, "domains":["D1","D2"], "timeFrom": 1, "timeTo": 10, "importance": 8},
+         {"source":10, "target":20, "domains":["D2"], "timeFrom": 1, "timeTo": 8, "importance": 4},
+         {"source":21, "target":32, "domains":["D2"], "timeFrom": 1, "timeTo": 6, "importance": 4},
+         {"source":21, "target":34, "domains":["D3"], "timeFrom": 1, "timeTo": 3, "importance": 2},
+         {"source":22, "target":33, "domains":["D3"], "timeFrom": 1, "timeTo": 2, "importance": 2},
+         {"source":23, "target":31, "domains":["D2"], "timeFrom": 1, "timeTo": 5, "importance": 4},
+         {"source":21, "target":31, "domains":["D2"], "timeFrom": 1, "timeTo": 4, "importance": 4},
+         {"source":33, "target":41, "domains":["D3"], "timeFrom": 1, "timeTo": 1, "importance": 2},
       ];
 
       function makeGraph(selector, nodesInput, linksInput) {
@@ -199,7 +199,9 @@
             .selectAll("line")
             .data(linksInput)
             .enter().append("line")
-            .attr("stroke-width", 5)
+            .attr("stroke-width", function(d) {
+               return d.importance;
+            })
             .on('mouseover', function(d) {
                var thisSource = d.source.id,
                   thisTarget = d.target.id;
@@ -341,20 +343,14 @@
                //console.debug("test: " + (l.timeFrom <= sliderValue && l.timeTo >= sliderValue));
                return (l.timeFrom <= sliderValue && l.timeTo >= sliderValue);
             })
-            .style("visibility",  function(l) {
-               console.debug("colorize link " + l.source.id + "-" + l.target.id + ": l.timeFrom: " + l.timeFrom + " l.timeTo: " + l.timeTo);
-               return "visible";
-            });
+            .style("visibility",  "visible");
 
             links.filter(function(l){
                //console.debug(l.source.id + "-" + l.target.id + ": l.timeFrom: " + l.timeFrom + " l.timeTo: " + l.timeTo);
                //console.debug("test: " + !(l.timeFrom <= sliderValue && l.timeTo >= sliderValue));
                return !(l.timeFrom <= sliderValue && l.timeTo >= sliderValue);
             })
-            .style("visibility",  function(l) {
-               console.debug("hide link " + l.source.id + "-" + l.target.id + ": l.timeFrom: " + l.timeFrom + " l.timeTo: " + l.timeTo);
-               return "hidden";
-            });
+            .style("visibility", "hidden");
          });
 
          const xSpread = 1;
